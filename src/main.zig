@@ -109,10 +109,21 @@ pub fn main() !void {
         }
     }.lessThan);
 
-    for (resItems.items) |item| {
-        const humanized = Humanize{ .bytes = toBytes(item.vmSwap, .kb) };
-        try stdout.print("{} {}\n", .{ item.name, humanized });
+    try stdout.writeAll("{");
+    for (resItems.items) |item, i| {
+        if (i != 0) try stdout.writeAll(",\n") else try stdout.writeAll("\n");
+
+        const humanize = Humanize{ .bytes = toBytes(item.vmSwap, .kb) };
+        const humanized = try std.fmt.allocPrint(alloc, "{}", .{humanize});
+        defer alloc.free(humanized);
+
+        try stdout.writeAll("  ");
+        try std.json.stringify(item.name, .{}, stdout);
+        try stdout.writeAll(": ");
+        try std.json.stringify(humanized, .{}, stdout);
     }
+    try stdout.writeAll("\n");
+    try stdout.writeAll("}\n");
 }
 
 // zig fmt: off
